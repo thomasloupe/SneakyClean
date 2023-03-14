@@ -4,9 +4,16 @@ let enabledWebsites = [];
 function setExtensionStatus(status) {
   isExtensionOn = status;
   chrome.action.setIcon({ path: isExtensionOn ? "img/icon_16.png" : "img/icon_16_disabled.png" });
-  chrome.action.setBadgeText({ text: isExtensionOn ? "ON" : "" });
+  if (isExtensionOn) {
+    chrome.action.setBadgeBackgroundColor({ color: "#008000" }); // set badge background color to green
+    chrome.action.setBadgeTextColor({ color: "#FFFFFF" }); // set badge text color to red
+    chrome.action.setBadgeText({ text: "ON" }); // set badge text to "ON"
+  } else {
+    chrome.action.setBadgeText({ text: "" }); // remove the badge
+  }
   saveToStorage();
 }
+
 
 function toggleWebsite(website) {
   if (enabledWebsites.includes(website)) {
