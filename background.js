@@ -5,6 +5,7 @@ function setExtensionStatus(status) {
   isExtensionOn = status;
   chrome.action.setIcon({ path: isExtensionOn ? "img/icon_16.png" : "img/icon_16_disabled.png" });
   chrome.action.setBadgeText({ text: isExtensionOn ? "ON" : "" });
+  saveToStorage();
 }
 
 function toggleWebsite(website) {
@@ -13,6 +14,7 @@ function toggleWebsite(website) {
   } else {
     enabledWebsites.push(website);
   }
+  saveToStorage();
 }
 
 function updateExtensionStatus(tab) {
@@ -23,6 +25,10 @@ function updateExtensionStatus(tab) {
   } else {
     setExtensionStatus(false);
   }
+}
+
+function saveToStorage() {
+  chrome.storage.sync.set({ isExtensionOn: isExtensionOn, enabledWebsites: enabledWebsites });
 }
 
 function deleteHistoryForEnabledWebsites() {
@@ -85,8 +91,13 @@ chrome.runtime.onSuspend.addListener(function() {
   }
 });
 
-chrome.storage.sync.get("enabledWebsites", function (result) {
-  if (result.enabledWebsites) {
+chrome.storage.sync.get(["isExtensionOn", "enabledWebsites"], function (result) {
+  if (result.isExtensionOn != undefined) {
+    isExtensionOn = result.isExtensionOn;
+    chrome.action.setIcon({ path: isExtensionOn ? "img/icon_16.png" : "img/icon_16_disabled.png" });
+    chrome.action.setBadgeText({ text: isExtensionOn ? "ON" : "" });
+  }
+  if (result.enabledWebsites != undefined) {
     enabledWebsites = result.enabledWebsites;
   }
 });
