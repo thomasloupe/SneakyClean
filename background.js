@@ -16,6 +16,9 @@ function setExtensionStatus(status) {
 
 
 function toggleWebsite(website) {
+  if (!website || website.startsWith("chrome://")) {
+    return;
+  }
   if (enabledWebsites.includes(website)) {
     enabledWebsites = enabledWebsites.filter((item) => item !== website);
   } else {
@@ -25,12 +28,14 @@ function toggleWebsite(website) {
 }
 
 function updateExtensionStatus(tab) {
-  let website = new URL(tab.url).hostname;
-  let isEnabled = enabledWebsites.includes(website);
-  if (isEnabled) {
-    setExtensionStatus(true);
-  } else {
-    setExtensionStatus(false);
+  if (tab.url && !tab.url.startsWith("chrome://")) {
+    let website = new URL(tab.url).hostname;
+    let isEnabled = enabledWebsites.includes(website);
+    if (isEnabled) {
+      setExtensionStatus(true);
+    } else {
+      setExtensionStatus(false);
+    }
   }
 }
 
