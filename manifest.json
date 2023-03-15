@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sneaky Clean",
-  "description": "Toggle extension on and off with one click",
+  "description": "Remove a website's history on a per-site basis with a single click.",
   "version": "1.0",
   "icons": {
     "16": "img/icon_16.png",
