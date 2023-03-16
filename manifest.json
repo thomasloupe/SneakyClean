@@ -20,5 +20,5 @@
       "text": "ON"
     }
   },
-  "permissions": ["tabs", "storage"]
+  "permissions": ["tabs", "storage", "history"]
 }

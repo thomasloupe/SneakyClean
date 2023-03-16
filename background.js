@@ -1,19 +1,19 @@
-let isExtensionOn = false;
 let enabledWebsites = [];
 
-function setExtensionStatus(status) {
-  isExtensionOn = status;
-  chrome.action.setIcon({ path: isExtensionOn ? "img/icon_16.png" : "img/icon_16_disabled.png" });
-  if (isExtensionOn) {
-    chrome.action.setBadgeBackgroundColor({ color: "#008000" }); // set badge background color to green
-    chrome.action.setBadgeTextColor({ color: "#FFFFFF" }); // set badge text color to red
-    chrome.action.setBadgeText({ text: "ON" }); // set badge text to "ON"
-  } else {
-    chrome.action.setBadgeText({ text: "" }); // remove the badge
+function setBadge(tab) {
+  let website = new URL(tab.url).hostname;
+  if (!website || website.startsWith("chrome://")) {
+    chrome.action.setBadgeText({ text: "" });
+    return;
   }
-  saveToStorage();
+  if (enabledWebsites.includes(website)) {
+    chrome.action.setBadgeBackgroundColor({ color: "#008000" });
+    chrome.action.setBadgeTextColor({ color: "#FFFFFF" });
+    chrome.action.setBadgeText({ text: "ON" });
+  } else {
+    chrome.action.setBadgeText({ text: "" });
+  }
 }
-
 
 function toggleWebsite(website) {
   if (!website || website.startsWith("chrome://")) {
@@ -27,89 +27,124 @@ function toggleWebsite(website) {
   saveToStorage();
 }
 
-function updateExtensionStatus(tab) {
-  if (tab.url && !tab.url.startsWith("chrome://")) {
-    let website = new URL(tab.url).hostname;
-    let isEnabled = enabledWebsites.includes(website);
-    if (isEnabled) {
-      setExtensionStatus(true);
-    } else {
-      setExtensionStatus(false);
-    }
-  }
-}
-
 function saveToStorage() {
-  chrome.storage.sync.set({ isExtensionOn: isExtensionOn, enabledWebsites: enabledWebsites });
+  chrome.storage.sync.set({ enabledWebsites: enabledWebsites });
 }
 
-function deleteHistoryForEnabledWebsites() {
-  chrome.history.search({text: '', maxResults: 0}, function(results) {
-    for (let i = 0; i < results.length; i++) {
-      let website = new URL(results[i].url).hostname;
-      if (enabledWebsites.includes(website)) {
-        chrome.history.deleteUrl({url: results[i].url});
+function deleteHistoryForWebsite(website) {
+  chrome.history.search({ text: website }, function (results) {
+    results.forEach((result) => {
+      if (new URL(result.url).hostname === website) {
+        chrome.history.deleteUrl({ url: result.url });
       }
-    }
+    });
   });
 }
 
 chrome.action.onClicked.addListener(function (tab) {
-  toggleWebsite(new URL(tab.url).hostname);
-  updateExtensionStatus(tab);
+  let website = new URL(tab.url).hostname;
+  if (!website || website.startsWith("chrome://")) {
+    return;
+  }
+  toggleWebsite(website);
+  setBadge(tab);
 });
 
-chrome.tabs.onActivated.addListener(function(activeInfo) {
-  chrome.tabs.get(activeInfo.tabId, function(tab) {
-    updateExtensionStatus(tab);
+function handleNavigationChange(tabId, website) {
+  if (enabledWebsites.includes(website)) {
+    deleteHistoryForWebsite(website);
+    setBadge({ id: tabId, url: 'http://' + website }); // Set badge for the new website
+  }
+}
+
+let tabUrls = {};
+
+chrome.tabs.onActivated.addListener(function (activeInfo) {
+  chrome.tabs.get(activeInfo.tabId, function (tab) {
+    let website = new URL(tab.url).hostname;
+    setBadge(tab);
+    tabUrls[tab.id] = tab.url;
+    if (enabledWebsites.includes(website)) {
+      deleteHistoryForWebsite(website);
+    }
   });
 });
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  updateExtensionStatus(tab);
-});
-
-chrome.windows.onRemoved.addListener(function (windowId) {
-  if (isExtensionOn) {
-    deleteHistoryForEnabledWebsites();
-    chrome.storage.sync.set({ enabledWebsites: enabledWebsites });
+  if (changeInfo.url) {
+    let oldWebsite = new URL(tabUrls[tabId]).hostname;
+    tabUrls[tabId] = changeInfo.url;
+    let newWebsite = new URL(changeInfo.url).hostname;
+    handleNavigationChange(tabId, oldWebsite);
   }
-});
-
-chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-  if (isExtensionOn) {
-    chrome.tabs.get(tabId, function(tab) {
-      let website = new URL(tab.url).hostname;
-      if (enabledWebsites.includes(website)) {
-        deleteHistoryForEnabledWebsites();
-      }
-    });
-  }
-});
-
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  if (isExtensionOn && changeInfo.url) {
-    let website = new URL(changeInfo.url).hostname;
+  if (changeInfo.status === "complete") {
+    setBadge(tab);
+    let website = new URL(tab.url).hostname;
     if (enabledWebsites.includes(website)) {
-      deleteHistoryForEnabledWebsites();
+      deleteHistoryForWebsite(website);
     }
   }
 });
 
-chrome.runtime.onSuspend.addListener(function() {
-  if (isExtensionOn) {
-    deleteHistoryForEnabledWebsites();
-    chrome.storage.sync.set({ enabledWebsites: enabledWebsites });
+function handleTabClose(website) {
+  if (enabledWebsites.includes(website)) {
+    deleteHistoryForWebsite(website);
+  }
+}
+
+chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+  if (tabUrls[tabId]) {
+    let website = new URL(tabUrls[tabId]).hostname;
+    handleTabClose(website);
+    delete tabUrls[tabId];
   }
 });
 
-chrome.storage.sync.get(["isExtensionOn", "enabledWebsites"], function (result) {
-  if (result.isExtensionOn != undefined) {
-    isExtensionOn = result.isExtensionOn;
-    chrome.action.setIcon({ path: isExtensionOn ? "img/icon_16.png" : "img/icon_16_disabled.png" });
-    chrome.action.setBadgeText({ text: isExtensionOn ? "ON" : "" });
-  }
+chrome.windows.onRemoved.addListener(function (windowId) {
+  chrome.windows.getAll({populate: true}, function (windows) {
+    if (windows.length === 0) { // No more windows left
+      chrome.tabs.query({}, function (tabs) {
+        tabs.forEach(function (tab) {
+          let website = new URL(tab.url).hostname;
+          handleTabClose(website);
+        });
+        chrome.storage.sync.set({ enabledWebsites: enabledWebsites });
+      });
+    }
+  });
+});
+
+chrome.storage.sync.get(["enabledWebsites"], function (result) {
   if (result.enabledWebsites != undefined) {
     enabledWebsites = result.enabledWebsites;
   }
+});
+
+chrome.runtime.onSuspend.addListener(function() {
+  chrome.tabs.query({}, function(tabs) {
+    tabs.forEach(function(tab) {
+      let website = new URL(tab.url).hostname;
+      handleTabClose(website);
+    });
+    chrome.storage.sync.set({ enabledWebsites: enabledWebsites });
+  });
+});
+
+chrome.runtime.onStartup.addListener(function () {
+  chrome.tabs.query({}, function (tabs) {
+    tabs.forEach(function (tab) {
+      let website = new URL(tab.url).hostname;
+      if (enabledWebsites.includes(website)) {
+        deleteHistoryForWebsite(website);
+      }
+    });
+  });
+});
+
+chrome.runtime.onInstalled.addListener(function() {
+  chrome.storage.sync.get(["enabledWebsites"], function (result) {
+    if (result.enabledWebsites != undefined) {
+      enabledWebsites = result.enabledWebsites;
+    }
+  });
 });
