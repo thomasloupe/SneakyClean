@@ -66,7 +66,7 @@ chrome.action.onClicked.addListener(function (tab) {
 function handleNavigationChange(tabId, website) {
   if (enabledWebsites.includes(website)) {
     deleteHistoryForWebsite(website);
-    setBadge({ id: tabId, url: 'http://' + website });
+    setBadge({ id: tabId, url: 'http://' + website }); // Set badge for the new website
   }
 }
 
@@ -115,7 +115,7 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 
 chrome.windows.onRemoved.addListener(function (windowId) {
   chrome.windows.getAll({populate: true}, function (windows) {
-    if (windows.length === 0) {
+    if (windows.length === 0) { // No more windows left
       chrome.tabs.query({}, function (tabs) {
         tabs.forEach(function (tab) {
           let website = new URL(tab.url).hostname;
@@ -164,13 +164,16 @@ chrome.runtime.onInstalled.addListener(function() {
 
 chrome.runtime.onInstalled.addListener(function(details) {
   if (details.reason === 'install') {
+    // Extension was just installed
     alert('Thanks for installing SneakyClean!\nIf you really enjoy the extension, you can donate at https://paypal.me/thomasloupe.');
   } else if (details.reason === 'update') {
+    // Extension was just updated
     var currentVersion = chrome.runtime.getManifest().version;
     var prevVersion = details.previousVersion;
     var message = 'SneakyClean has been updated from ' + prevVersion + ' to ' + currentVersion + '.\n\n';
     message += 'Here are the changes:\n\n';
 
+    // Loop through each line in changelog.txt
     fetch(chrome.runtime.getURL('changelog.txt'))
       .then(response => response.text())
       .then(changelog => {
