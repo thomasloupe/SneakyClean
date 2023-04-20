@@ -172,15 +172,9 @@ chrome.runtime.onInstalled.addListener(function(details) {
     var prevVersion = details.previousVersion;
     var message = 'SneakyClean has been updated from ' + prevVersion + ' to ' + currentVersion + '.\n\n';
     message += 'Here are the changes:\n\n';
-
-    // Loop through each line in changelog.txt
-    fetch(chrome.runtime.getURL('changelog.txt'))
-      .then(response => response.text())
-      .then(changelog => {
-        changelog.split('\n').forEach(function(line) {
-          message += line.trim() + '\n';
-        });
-        alert(message);
-      });
+    message += 'Now also removes cache.\n';
+    message += 'Now also removes history from recently visited tab.\n';
+    message += 'Now removes websites from omnibox search.\n';
+    alert(message);
   }
 });
