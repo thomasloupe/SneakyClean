@@ -1,0 +1,4 @@
+Now also clears the cache for websites it's enabled for.
+Now also clears the "recently visited" tab for websites it's enabled for.
+Now also removes omnibox search complete for websites it's enabled for.
+Now comes with a shiny new changelog (what you're reading) to tell you about new updates!
