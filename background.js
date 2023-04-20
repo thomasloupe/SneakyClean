@@ -36,22 +36,9 @@ function deleteHistoryForWebsite(website) {
     results.forEach((result) => {
       if (new URL(result.url).hostname === website) {
         chrome.history.deleteUrl({ url: result.url });
-        chrome.browsingData.removeCache({ originTypes: { unprotectedWeb: true }, hostnames: [website] });
       }
     });
   });
-
-  chrome.sessions.getRecentlyClosed(function (sessions) {
-    if (sessions && sessions.length > 0) {
-      sessions.forEach(function (session) {
-        if (session.tab && session.tab.url && new URL(session.tab.url).hostname === website) {
-          chrome.sessions.forgetClosedTab(session.windowId, session.tab.windowId, session.tab.sessionId);
-        }
-      });
-    }
-  });
-
-  chrome.omnibox.deleteSuggestResults(website);
 }
 
 chrome.action.onClicked.addListener(function (tab) {
@@ -160,21 +147,4 @@ chrome.runtime.onInstalled.addListener(function() {
       enabledWebsites = result.enabledWebsites;
     }
   });
-});
-
-chrome.runtime.onInstalled.addListener(function(details) {
-  if (details.reason === 'install') {
-    // Extension was just installed
-    alert('Thanks for installing SneakyClean!\nIf you really enjoy the extension, you can donate at https://paypal.me/thomasloupe.');
-  } else if (details.reason === 'update') {
-    // Extension was just updated
-    var currentVersion = chrome.runtime.getManifest().version;
-    var prevVersion = details.previousVersion;
-    var message = 'SneakyClean has been updated from ' + prevVersion + ' to ' + currentVersion + '.\n\n';
-    message += 'Here are the changes:\n\n';
-    message += 'Now also removes cache.\n';
-    message += 'Now also removes history from recently visited tab.\n';
-    message += 'Now removes websites from omnibox search.\n';
-    alert(message);
-  }
 });
