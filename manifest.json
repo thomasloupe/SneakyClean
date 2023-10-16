@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Sneaky Clean",
   "description": "Remove a website's history on a per-site basis with a single click.",
-  "version": "1.0",
+  "version": "1.1",
   "icons": {
     "16": "img/icon_16.png",
     "32": "img/icon_32.png"
@@ -18,5 +18,13 @@
       "text": "ON"
     }
   },
-  "permissions": ["tabs", "storage", "history"]
+  "content_scripts": [
+    {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "all_frames": true,
+        "run_at": "document_start"
+    }
+  ],
+  "permissions": ["tabs", "storage", "history", "cookies"]
 }
