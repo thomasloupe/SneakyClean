@@ -2,6 +2,10 @@
 Sneaky Clean is a per-site toggleable Google Chrome extension that automatically removes browsing history when a tab is closed, navigated away from, or the browser is closed, ensuring users' browsing privacy.
 
 # Installing SneakyClean
+NOTE: You can download the extension directly from the Chrome Web Store for free:    
+https://chromewebstore.google.com/detail/sneaky-clean/gjedjcpoakppkpklidcmombflpkoaajd    
+
+For manual installation:    
 1. Download the latest [release](https://github.com/thomasloupe/SneakyClean/releases).
 2. Extract the zip file to a new folder called SneakyClean.
 3. Open Chrome and navigate to `chrome://extensions`.
