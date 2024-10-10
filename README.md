@@ -1,4 +1,4 @@
-# SneakyClean ![This is an image](https://imgur.com/a/EplMyMF)
+# SneakyClean ![SneakyClean Ninja Duck](https://i.imgur.com/c1VckKX.png)
 Sneaky Clean is a privacy extension for Google Chrome that automatically removes browsing history, cache, and cookies when a tab is closed, navigated away from, or the browser is closed.
 
 # Installing SneakyClean
