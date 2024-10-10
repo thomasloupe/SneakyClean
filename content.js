@@ -1,6 +1,8 @@
-chrome.runtime.sendMessage({}, function(response) {
-    let website = window.location.hostname;
-    if (response.enabledWebsites.includes(website)) {
+let website = window.location.hostname;
+
+chrome.storage.sync.get([website], function(result) {
+    const settings = result[website];
+    if (settings && settings.cache) {
         let meta = document.createElement('meta');
         meta.httpEquiv = "Cache-Control";
         meta.content = "no-store, no-cache, must-revalidate, post-check=0, pre-check=0";

@@ -1,5 +1,5 @@
-# SneakyClean ![This is an image](https://i.imgur.com/RH6Z1fD.png)
-Sneaky Clean is a per-site toggleable Google Chrome extension that automatically removes browsing history when a tab is closed, navigated away from, or the browser is closed, ensuring users' browsing privacy.
+# SneakyClean ![This is an image](https://imgur.com/a/EplMyMF)
+Sneaky Clean is a privacy extension for Google Chrome that automatically removes browsing history, cache, and cookies when a tab is closed, navigated away from, or the browser is closed.
 
 # Installing SneakyClean
 1. Download the latest [release](https://github.com/thomasloupe/SneakyClean/releases).
@@ -9,10 +9,12 @@ Sneaky Clean is a per-site toggleable Google Chrome extension that automatically
 5. Click "Load Unpacked" and select the Sneaky Clean folder.
 6. The extension is now loaded.
 </br>
-NOTE: You may want to pin the extension so you can toggle it on or off for websites as you see fit.
+TIP: Pin the extension so you can easily toggle any option on/off for a website.
 
 # How to use SneakyClean
 
-1. Visit any website you wish to never keep browsing history for.
-2. Click the extension so it shows "ON".
-3. If you navigate away from that domain, close the tab, or the browser, the browsing history for that site will be permanently removed.
+1. Visit any website you wish to activate Sneaky Clean on.
+2. Click the extension's icon in the extension toolbar area.
+3. Tick the slider on any option you wish to enable.
+
+Sneaky Clean will remove any data you've chosen to if you navigate away from the website in the same tab, close the tab for the website, or close the browser entirely.
