@@ -4,12 +4,8 @@ Sneaky Clean is a privacy extension for Google Chrome and Mozilla Firefox that a
 # Installing SneakyClean
 
 ## Chrome
-1. Download `SneakyClean-chrome.zip` from the latest [release](https://github.com/thomasloupe/SneakyClean/releases).
-2. Extract the zip file to a new folder called SneakyClean.
-3. Open Chrome and navigate to `chrome://extensions`.
-4. Tick the slider on the top-right for "Developer Mode" on.
-5. Click "Load Unpacked" and select the Sneaky Clean folder.
-6. The extension is now loaded.
+1. Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/sneaky-clean/gjedjcpoakppkpklidcmombflpkoaajd), or
+2. Download `SneakyClean-chrome.zip` from the latest [release](https://github.com/thomasloupe/SneakyClean/releases), extract it to a folder called SneakyClean, open `chrome://extensions`, enable "Developer Mode", click "Load Unpacked", and select the folder.
 
 ## Firefox
 1. Install from the [Firefox Add-ons site](https://addons.mozilla.org/firefox/addon/sneaky-clean/), or
