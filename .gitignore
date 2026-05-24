@@ -1,2 +1,7 @@
 # Ignore Thumbs.db files in the img folder
 img/Thumbs.db
+
+# Release artifacts
+SneakyClean.zip
+SneakyClean-chrome.zip
+SneakyClean-firefox.zip

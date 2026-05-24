@@ -17,7 +17,7 @@
       text-align: center;
       height: 100%;
       color: #ECEFF1;
-      background-image: radial-gradient(lighten(#263238, 20%), #263238);
+      background-image: radial-gradient(#4a5c64, #263238);
     }
 
     body {
@@ -49,6 +49,10 @@
       background-color: #1a1a1a;
       transition: all 500ms;
       cursor: pointer;
+      padding: 0;
+      font: inherit;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     .toggle:active {
@@ -124,6 +128,7 @@
       justify-content: center;
       align-items: center;
       position: relative;
+      cursor: pointer;
     }
 
     .power-switch .button:after {
@@ -262,8 +267,8 @@
 <body>
   <!-- Enable Button -->
   <div class="power-switch">
-      <input type="checkbox" />
-      <div class="button">
+      <input type="checkbox" id="power-toggle" aria-label="Toggle all features" />
+      <label for="power-toggle" class="button">
           <svg class="power-off">
               <use xlink:href="#line" class="line" />
               <use xlink:href="#circle" class="circle" />
@@ -272,23 +277,23 @@
               <use xlink:href="#line" class="line" />
               <use xlink:href="#circle" class="circle" />
           </svg>
-      </div>
+      </label>
   </div>
 
   <!-- Container for each feature toggle -->
   <div class="feature-container">
-      <p class="feature-text">History</p>
-      <a href="#" class="toggle toggle--on" data-feature="history"></a>
+      <p class="feature-text" id="history-label">History</p>
+      <button type="button" class="toggle toggle--off" data-feature="history" aria-labelledby="history-label"></button>
   </div>
 
   <div class="feature-container">
-      <p class="feature-text">Cache</p>
-      <a href="#" class="toggle toggle--on" data-feature="cache"></a>
+      <p class="feature-text" id="cache-label">Cache</p>
+      <button type="button" class="toggle toggle--off" data-feature="cache" aria-labelledby="cache-label"></button>
   </div>
 
   <div class="feature-container">
-      <p class="feature-text">Cookies</p>
-      <a href="#" class="toggle toggle--on" data-feature="cookies"></a>
+      <p class="feature-text" id="cookies-label">Cookies</p>
+      <button type="button" class="toggle toggle--off" data-feature="cookies" aria-labelledby="cookies-label"></button>
   </div>
 
   <!-- SVG -->

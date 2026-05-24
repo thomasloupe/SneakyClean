@@ -1,13 +1,35 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const DEFAULT_SETTINGS = { history: false, cache: false, cookies: false };
     const powerSwitch = document.querySelector('.power-switch input');
     const toggles = document.querySelectorAll('.toggle');
     let currentTab = null;
-    let isUpdating = false; // Prevent recursive updates
+    let isUpdating = false;
+    let listenersAdded = false;
+
+    // Helper function to safely parse URLs
+    function safeParseUrl(url) {
+        if (!url) return null;
+        try {
+            return new URL(url);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // Helper function to check if URL should be skipped
+    function shouldSkipUrl(url) {
+        const parsed = safeParseUrl(url);
+        if (!parsed) return true;
+
+        const skipProtocols = ['chrome:', 'chrome-extension:', 'about:', 'edge:', 'file:'];
+        return skipProtocols.includes(parsed.protocol) || !parsed.hostname;
+    }
 
     // Get the current tab
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         currentTab = tabs[0];
         loadAndUpdateUI();
+        setupTabListeners();
     });
 
     function areAnyTogglesOn(settings) {
@@ -40,36 +62,53 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function resetUI() {
+        updateToggleStates(DEFAULT_SETTINGS);
+        powerSwitch.checked = false;
+    }
+
     function loadAndUpdateUI() {
-        if (!currentTab || !currentTab.url) {
+        if (!currentTab || !currentTab.url || shouldSkipUrl(currentTab.url)) {
+            resetUI();
             return;
         }
 
-        const url = new URL(currentTab.url);
-        const hostname = url.hostname;
-
-        // Skip chrome:// URLs
-        if (hostname.startsWith('chrome://') || !hostname) {
+        const parsed = safeParseUrl(currentTab.url);
+        if (!parsed) {
+            resetUI();
             return;
         }
+
+        const hostname = parsed.hostname;
 
         chrome.storage.sync.get('siteSettings', function(data) {
+            if (chrome.runtime.lastError) {
+                console.debug('SneakyClean popup:', chrome.runtime.lastError.message);
+                return;
+            }
+
             const allSiteSettings = data.siteSettings || {};
-            const settings = allSiteSettings[hostname] || { history: false, cache: false, cookies: false };
+            const settings = allSiteSettings[hostname] || { ...DEFAULT_SETTINGS };
 
-            // Update toggle states first
             updateToggleStates(settings);
-
-            // Then update power switch to match
             updatePowerSwitchState(settings, true);
         });
     }
 
     function saveSettings(hostname, settings, callback) {
         chrome.storage.sync.get('siteSettings', function(data) {
+            if (chrome.runtime.lastError) {
+                console.debug('SneakyClean popup:', chrome.runtime.lastError.message);
+                if (callback) callback();
+                return;
+            }
+
             const allSiteSettings = data.siteSettings || {};
             allSiteSettings[hostname] = settings;
             chrome.storage.sync.set({ siteSettings: allSiteSettings }, function() {
+                if (chrome.runtime.lastError) {
+                    console.debug('SneakyClean popup:', chrome.runtime.lastError.message);
+                }
                 chrome.runtime.sendMessage({
                     action: 'updateSettings',
                     hostname: hostname,
@@ -101,13 +140,24 @@ document.addEventListener('DOMContentLoaded', function() {
             const feature = this.getAttribute('data-feature');
             const isEnabled = this.classList.contains('toggle--on');
 
-            if (currentTab && currentTab.url) {
-                const url = new URL(currentTab.url);
-                const hostname = url.hostname;
+            if (currentTab && currentTab.url && !shouldSkipUrl(currentTab.url)) {
+                const parsed = safeParseUrl(currentTab.url);
+                if (!parsed) {
+                    isUpdating = false;
+                    return;
+                }
+
+                const hostname = parsed.hostname;
 
                 chrome.storage.sync.get('siteSettings', function(data) {
+                    if (chrome.runtime.lastError) {
+                        console.debug('SneakyClean popup:', chrome.runtime.lastError.message);
+                        isUpdating = false;
+                        return;
+                    }
+
                     const allSiteSettings = data.siteSettings || {};
-                    const settings = allSiteSettings[hostname] || { history: false, cache: false, cookies: false };
+                    const settings = allSiteSettings[hostname] || { ...DEFAULT_SETTINGS };
                     settings[feature] = isEnabled;
 
                     saveSettings(hostname, settings, function() {
@@ -128,21 +178,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const newState = this.checked;
 
-        if (currentTab && currentTab.url) {
-            const url = new URL(currentTab.url);
-            const hostname = url.hostname;
+        if (currentTab && currentTab.url && !shouldSkipUrl(currentTab.url)) {
+            const parsed = safeParseUrl(currentTab.url);
+            if (!parsed) {
+                isUpdating = false;
+                return;
+            }
+
+            const hostname = parsed.hostname;
 
             chrome.storage.sync.get('siteSettings', function(data) {
-                const allSiteSettings = data.siteSettings || {};
-                const settings = allSiteSettings[hostname] || { history: false, cache: false, cookies: false };
+                if (chrome.runtime.lastError) {
+                    console.debug('SneakyClean popup:', chrome.runtime.lastError.message);
+                    isUpdating = false;
+                    return;
+                }
 
-                // Set all settings to the new state
+                const allSiteSettings = data.siteSettings || {};
+                const settings = allSiteSettings[hostname] || { ...DEFAULT_SETTINGS };
+
                 Object.keys(settings).forEach(key => {
                     settings[key] = newState;
                 });
 
+                // Update the toggle UI immediately for snappier feedback.
+                updateToggleStates(settings);
+
                 saveSettings(hostname, settings, function() {
-                    updateToggleStates(settings);
                     isUpdating = false;
                 });
             });
@@ -151,21 +213,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Listen for tab changes while popup is open
-    chrome.tabs.onActivated.addListener(function(activeInfo) {
-        chrome.tabs.get(activeInfo.tabId, function(tab) {
-            currentTab = tab;
-            loadAndUpdateUI();
+    // Setup tab listeners only once to prevent memory leaks
+    function setupTabListeners() {
+        if (listenersAdded) return;
+        listenersAdded = true;
+
+        // Listen for tab changes while popup is open
+        chrome.tabs.onActivated.addListener(function(activeInfo) {
+            chrome.tabs.get(activeInfo.tabId, function(tab) {
+                if (chrome.runtime.lastError) {
+                    console.debug('SneakyClean popup:', chrome.runtime.lastError.message);
+                    return;
+                }
+                currentTab = tab;
+                loadAndUpdateUI();
+            });
         });
-    });
 
-    chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-        if (changeInfo.status === 'complete' && currentTab && tab.id === currentTab.id) {
-            currentTab = tab;
-            loadAndUpdateUI();
-        }
-    });
-
-    // Initial load
-    loadAndUpdateUI();
+        chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+            if (changeInfo.status === 'complete' && currentTab && tab.id === currentTab.id) {
+                currentTab = tab;
+                loadAndUpdateUI();
+            }
+        });
+    }
 });
